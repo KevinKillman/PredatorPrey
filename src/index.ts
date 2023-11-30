@@ -2,6 +2,7 @@ import * as p5 from 'p5';
 import { Vector, } from 'p5';
 import { Boid } from "./Boid";
 import { Rectangle, Point, Quadtree } from './Quadtree';
+import { Prey } from './Prey';
 
 
 let alignSlider: p5.Element, cohesionSlider: p5.Element, separationSlider: p5.Element;
@@ -9,43 +10,26 @@ let flock: Boid[] = [];
 let qt: Quadtree<Point<Boid>>;
 let range: Rectangle;
 let canvasDimensions = { height: 2000, width: 960 };
-// let points: any[] = [];
+let points: any[] = [];
 export const sketch = (p: p5) => {
     p.setup = () => {
         let canvas = p.createCanvas(canvasDimensions.height, canvasDimensions.width);
         canvas.parent("canvasContainer")
-        alignSlider = p.createSlider(0, 5, 1, .1);
-        cohesionSlider = p.createSlider(0, 5, 1, .1);
-        separationSlider = p.createSlider(0, 5, 1, .1);
-
-
-        for (let i = 0; i <= 100; i++) {
-            let b = new Boid(p);
-            flock.push(b);
-            b.alignSlider = alignSlider;
-            b.cohesionSlider = cohesionSlider;
-            b.separationSlider = separationSlider;
+        for (let i = 0; i < 3; i++) {
+            let prey = new Prey(p.createVector(1000, 450), p);
+            points.push(prey);
         }
+        console.log(points);
+
     }
 
     p.draw = () => {
         p.background(0);
-        let boundary = new Rectangle(canvasDimensions.height / 2, canvasDimensions.width / 2, canvasDimensions.height, canvasDimensions.width);
-        qt = new Quadtree<Point<Boid>>(boundary, 4, p);
-        for (let b of flock) {
-            let point = new Point<Boid>(b.position.x, b.position.y, b);
-            qt.insert(point);
-        }
 
-        for (let b of flock) {
-            b.update();
-            let range = new Rectangle(b.position.x, b.position.y, b.alignRadius, b.alignRadius)
-            let other: Boid[] = qt.query(range).map((x) => x.userData);
-            // b.flock(other);
-            b.collision(other);
-            b.show();
+        for (let prey of points) {
+            prey.move();
+            prey.draw();
         }
-
     }
 }
 
