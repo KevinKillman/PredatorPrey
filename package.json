@@ -19,6 +19,7 @@
     "webpack-dev-server": "^4.15.1"
   },
   "dependencies": {
+    "brain.js": "^2.0.0-beta.23",
     "p5": "^1.8.0"
   }
 }

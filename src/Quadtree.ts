@@ -101,10 +101,10 @@ export class Quadtree<Type> {
         }
     }
 
-    query(range: Rectangle, found: any[] = []) {
+    query(range: Rectangle, found: any[] = []): Type[] {
 
         if (!this.boundary.intersects(range)) {
-            return;
+            return found;
         } else {
             for (let p of this.points) {
                 if (range.contains(p)) {
@@ -119,6 +119,18 @@ export class Quadtree<Type> {
             this.se.query(range, found);
         }
         return found;
+    }
+
+    runFunctionOnAllPoints(func: Function = (point: Type) => { }) {
+        this.points.forEach(p => { func(p) });
+        if (this.divided) {
+            this.nw.runFunctionOnAllPoints(func);
+            this.ne.runFunctionOnAllPoints(func);
+            this.sw.runFunctionOnAllPoints(func);
+            this.se.runFunctionOnAllPoints(func);
+        } else {
+            return;
+        }
     }
 
     show() {
