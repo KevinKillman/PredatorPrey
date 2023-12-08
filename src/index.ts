@@ -14,6 +14,7 @@ let canvasDimensions = { height: 800, width: 800 };
 let preys: Prey[] = [];
 let preds: Predator[] = [];
 let drawables: any[] = [];
+const MAXPREY: number = 500;
 export const sketch = (p5Ref: p5) => {
     p5Ref.setup = () => {
         let canvas = p5Ref.createCanvas(canvasDimensions.height, canvasDimensions.width);
@@ -21,13 +22,13 @@ export const sketch = (p5Ref: p5) => {
         p5Ref.angleMode(p5Ref.DEGREES);
         linesSlider = p5Ref.createSlider(2, 14, 4, 1);
 
-        for (let i = 0; i <= 3; i++) {
+        for (let i = 0; i <= 0; i++) {
             let pred = new Predator(p5Ref.createVector(p5Ref.random(p5Ref.width), p5Ref.random(p5Ref.height)), p5Ref);
             preds.push(pred);
             drawables.push(pred);
         }
 
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 10; i++) {
             let prey = new Prey(p5Ref.createVector(p5Ref.random(p5Ref.width), p5Ref.random(p5Ref.height)), p5Ref);
             prey.movementMultiplier = p5Ref.random(1, 7);
             prey.debugObj.showVisionLines = false;
@@ -49,18 +50,29 @@ export const sketch = (p5Ref: p5) => {
         p5Ref.background(0);
         let boundary = new Rectangle(canvasDimensions.height / 2, canvasDimensions.width / 2, canvasDimensions.width, canvasDimensions.height);
         preyQt = new Quadtree<Point<Prey>>(boundary, 4, p5Ref);
+        let preySpawns: Prey[] = [];
         for (let prey of preys) {
             let point = new Point<Prey>(prey.pos.x, prey.pos.y, prey);
             let sliderVal = parseFloat(linesSlider.value());
             if (prey.numberOfVisionLines != sliderVal) {
                 prey.numberOfVisionLines = sliderVal;
             }
-
             preyQt.insert(point);
+            if (prey.spawned.length > 0) {
+                prey.spawned.forEach((spawn) => {
+                    let sPoint = new Point<Prey>(spawn.pos.x, spawn.pos.y, spawn)
+                    if (preys.length < MAXPREY) {
+                        preyQt.insert(sPoint);
+                        preys.push(spawn);
+                        drawables.push(spawn);
+                    }
+                })
+                prey.popSpawns();
+            }
         }
 
         for (let pred of preds) {
-            let range = new Rectangle(pred.pos.x, pred.pos.y, 10, 10);
+            let range = new Rectangle(pred.pos.x, pred.pos.y, pred.visionDistance, pred.visionDistance);
             let closePrey = preyQt.query(range);
             let eatenPrey = [];
             if (closePrey.length != 0) {

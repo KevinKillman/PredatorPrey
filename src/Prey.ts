@@ -31,7 +31,10 @@ export class Prey implements Drawable {
     visionDistance: number;
     turnAngle: number;
     debugObj: DebugObject;
-    constructor(pos: Vector, p5Ref: p5, radius: number = 5, movementPoints: number = 500, movementPointsRegen: number = 3, movementMultiplier: number = 5, visionDistance: number = 300, numberOfVisionLines: number = 9, turnAngle: number = 15) {
+    spawntime: number;
+    spawntimeMax: number;
+    private _spawns: Prey[];
+    constructor(pos: Vector, p5Ref: p5, radius: number = 5, movementPoints: number = 500, movementPointsRegen: number = 3, movementMultiplier: number = 5, visionDistance: number = 300, numberOfVisionLines: number = 9, turnAngle: number = 15, timeToReplicate: number = 200) {
         this.pos = pos;
         this.heading = p5Ref.createVector(p5Ref.random(-1, 1), p5Ref.random(-1, 1)).normalize();
         this._p5 = p5Ref;
@@ -46,6 +49,9 @@ export class Prey implements Drawable {
         this._numberOfVisionLines = numberOfVisionLines;
         this.turnAngle = turnAngle;
         this.debugObj = new DebugObject();
+        this.spawntime = 0;
+        this.spawntimeMax = timeToReplicate;
+        this._spawns = [];
         this.calculateVisionLineOffsets();
     }
     calculateVisionLineOffsets() {
@@ -56,6 +62,10 @@ export class Prey implements Drawable {
             // this.heading.rotate(3);
             let temp = this.heading.copy();
             this.pos.sub(temp.mult(this.movementMultiplier));
+            this.spawntime += temp.mag();
+            if (this.spawntime > this.spawntimeMax) {
+                this.spawn();
+            }
             this.movementPoints -= temp.mag();
         } else {
             this.moving = false;
@@ -114,6 +124,20 @@ export class Prey implements Drawable {
             headingCopy.rotate(this.visionLinesAngle);
         }
     }
+    public get spawned(): Prey[] {
+
+        return this._spawns;
+    }
+    spawn() {
+        let nPrey = new Prey(this._p5.createVector(this._p5.random(this._p5.width), this._p5.random(this._p5.height)), this._p5)
+        this._spawns.push(nPrey);
+        this.spawntime = 0;
+    }
+    popSpawns() {
+        while (this._spawns.length > 0) {
+            this._spawns.pop();
+        }
+    }
 
     collision(proxList: Prey[]) {
         for (let i = 0; i < proxList.length; i++) {
@@ -140,7 +164,7 @@ export class Prey implements Drawable {
 
 }
 
-class DebugObject {
+export class DebugObject {
     showVisionLines: boolean;
     constructor() {
         this.showVisionLines = false;

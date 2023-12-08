@@ -1,6 +1,6 @@
 import * as p5 from "p5";
 import { Vector } from "p5";
-import { Drawable, Prey } from "./Prey";
+import { DebugObject, Drawable, Prey } from './Prey';
 
 export class Predator implements Drawable {
     _p5: p5;
@@ -9,6 +9,7 @@ export class Predator implements Drawable {
     radius: number;
     growSize: number;
     visionLines: Vector[];
+    headingIncrease: Vector;
     private _numberOfVisionLines: number;
     public set numberOfVisionLines(numberOfVisionLines: number) {
         this._numberOfVisionLines = numberOfVisionLines;
@@ -20,17 +21,22 @@ export class Predator implements Drawable {
     visionLinesAngle: number;
     turnAngle: number;
     visionDistance: number;
+    debugObj: DebugObject;
 
 
     constructor(pos: Vector, p5Ref: p5, visionDistance: number = 150, numberOfVisionLines: number = 8) {
         this.pos = pos;
         this.heading = p5Ref.createVector(p5Ref.random(-1, 1), p5Ref.random(-1, 1)).normalize();
+        this.headingIncrease = this.heading.copy();
+        this.headingIncrease.mult(.2);
         this._p5 = p5Ref;
         this.radius = 5;
         this.growSize = 1;
         this.visionLines = [];
         this._numberOfVisionLines = numberOfVisionLines;
         this.visionDistance = visionDistance;
+        this.debugObj = new DebugObject();
+        this.debugObj.showVisionLines = false;
         this.calculateVisionLineOffsets();
     }
 
@@ -38,8 +44,10 @@ export class Predator implements Drawable {
         this._p5.push();
         this._p5.stroke(255, 0, 0);
         this._p5.fill(255, 0, 0);
-        this._p5.circle(this.pos.x, this.pos.y, this.radius);
-        this.drawVisionRays();
+        this._p5.circle(this.pos.x, this.pos.y, this.radius * 2);
+        if (this.debugObj.showVisionLines) {
+            this.drawVisionRays();
+        }
         this._p5.pop();
     }
     move() {
@@ -60,10 +68,8 @@ export class Predator implements Drawable {
     }
     drawVisionRays() {
         this._p5.stroke(255, 0, 0);
-        this.visionLines.forEach((line) => {
-            let c = line.copy();
-            c.mult(this.visionDistance);
-            this._p5.line(this.pos.x, this.pos.y, this.pos.x + c.x, this.pos.y + c.y);
+        this.visionLines.forEach((point) => {
+            this._p5.line(this.pos.x, this.pos.y, this.pos.x + point.x, this.pos.y + point.y);
             this._p5.stroke(0, 255, 0);
         })
     }
@@ -71,7 +77,9 @@ export class Predator implements Drawable {
         this.visionLinesAngle = 360 / this._numberOfVisionLines;
         let up = this._p5.createVector(0, -1);
         for (let i = 0; i < this._numberOfVisionLines; i++) {
-            this.visionLines.push(up.copy());
+            let c = up.copy();
+            c.mult(this.visionDistance);
+            this.visionLines.push(c);
             up.rotate(this.visionLinesAngle);
         }
     }
@@ -91,5 +99,6 @@ export class Predator implements Drawable {
     }
     consume(prey: Prey) {
         this.radius += this.growSize;
+        // this.heading.add(this.headingIncrease);
     }
 }
