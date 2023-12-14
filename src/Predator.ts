@@ -21,6 +21,8 @@ export class Predator implements Drawable {
     visionLinesAngle: number;
     turnAngle: number;
     visionDistance: number;
+    color: p5.Color;
+    numberEaten: number;
     debugObj: DebugObject;
 
 
@@ -38,13 +40,19 @@ export class Predator implements Drawable {
         this.debugObj = new DebugObject();
         this.debugObj.showVisionLines = false;
         this.calculateVisionLineOffsets();
+        this.color = this._p5.color(255, 0, 0);
+        this.numberEaten = 0;
     }
 
     draw() {
         this._p5.push();
-        this._p5.stroke(255, 0, 0);
-        this._p5.fill(255, 0, 0);
+        this._p5.stroke(this.color);
+        this._p5.fill(this.color);
         this._p5.circle(this.pos.x, this.pos.y, this.radius * 2);
+        this._p5.stroke(this._p5.color("white"));
+        this._p5.fill(this._p5.color("white"));
+        this._p5.textAlign(this._p5.CENTER, this._p5.CENTER);
+        this._p5.text(this.numberEaten.toString(), this.pos.x, this.pos.y);
         if (this.debugObj.showVisionLines) {
             this.drawVisionRays();
         }
@@ -98,7 +106,13 @@ export class Predator implements Drawable {
         return eaten;
     }
     consume(prey: Prey) {
-        this.radius += this.growSize;
+        this.numberEaten++;
+        if (this.radius <= this._p5.width / 10) {
+            this.radius += this.growSize;
+        }
+        if (this.radius > this.visionDistance) {
+            this.visionDistance = this.radius;
+        }
         // this.heading.add(this.headingIncrease);
     }
 }

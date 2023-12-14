@@ -1,5 +1,6 @@
 import * as p5 from 'p5';
 import { Vector } from "p5";
+import { Point } from './Quadtree';
 
 export interface Drawable {
     pos: Vector;
@@ -7,8 +8,14 @@ export interface Drawable {
     move(): void;
 }
 
-export class Prey implements Drawable {
+export class Prey implements Drawable, Point {
     pos: Vector;
+    public get x() {
+        return this.pos.x
+    }
+    public get y() {
+        return this.pos.y
+    }
     heading: Vector;
     visionLines: Vector[];
     ///so I can use a setter. Whenever this is set outside the object, the angle for the vision line rotation is recalculated.///
@@ -34,6 +41,10 @@ export class Prey implements Drawable {
     spawntime: number;
     spawntimeMax: number;
     private _spawns: Prey[];
+    public get spawned(): Prey[] {
+
+        return this._spawns;
+    }
     constructor(pos: Vector, p5Ref: p5, radius: number = 5, movementPoints: number = 500, movementPointsRegen: number = 3, movementMultiplier: number = 5, visionDistance: number = 300, numberOfVisionLines: number = 9, turnAngle: number = 15, timeToReplicate: number = 200) {
         this.pos = pos;
         this.heading = p5Ref.createVector(p5Ref.random(-1, 1), p5Ref.random(-1, 1)).normalize();
@@ -112,6 +123,7 @@ export class Prey implements Drawable {
         this._p5.pop();
     }
 
+
     drawVisionRays() {
         let headingCopy = this.heading.copy();
         this._p5.stroke(255, 0, 0);
@@ -123,14 +135,15 @@ export class Prey implements Drawable {
             this._p5.stroke(0, 255, 0);
             headingCopy.rotate(this.visionLinesAngle);
         }
-    }
-    public get spawned(): Prey[] {
 
-        return this._spawns;
     }
+
     spawn() {
         let nPrey = new Prey(this._p5.createVector(this._p5.random(this._p5.width), this._p5.random(this._p5.height)), this._p5)
-        this._spawns.push(nPrey);
+        let determiner = this._p5.random(0, 100);
+        if (determiner >= 25) {
+            this._spawns.push(nPrey);
+        }
         this.spawntime = 0;
     }
     popSpawns() {

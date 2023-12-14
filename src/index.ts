@@ -8,7 +8,7 @@ import { Predator } from './Predator';
 
 let alignSlider: p5.Element, cohesionSlider: p5.Element, separationSlider: p5.Element, linesSlider: any;
 let flock: Boid[] = [];
-let preyQt: Quadtree<Point<Prey>>;
+let preyQt: Quadtree<Prey>;
 let range: Rectangle;
 let canvasDimensions = { height: 800, width: 800 };
 let preys: Prey[] = [];
@@ -22,7 +22,7 @@ export const sketch = (p5Ref: p5) => {
         p5Ref.angleMode(p5Ref.DEGREES);
         linesSlider = p5Ref.createSlider(2, 14, 4, 1);
 
-        for (let i = 0; i <= 0; i++) {
+        for (let i = 0; i <= 3; i++) {
             let pred = new Predator(p5Ref.createVector(p5Ref.random(p5Ref.width), p5Ref.random(p5Ref.height)), p5Ref);
             preds.push(pred);
             drawables.push(pred);
@@ -48,25 +48,27 @@ export const sketch = (p5Ref: p5) => {
 
     p5Ref.draw = () => {
         p5Ref.background(0);
+        //always recreate the boundary and Quadtree.
         let boundary = new Rectangle(canvasDimensions.height / 2, canvasDimensions.width / 2, canvasDimensions.width, canvasDimensions.height);
-        preyQt = new Quadtree<Point<Prey>>(boundary, 4, p5Ref);
-        let preySpawns: Prey[] = [];
+        preyQt = new Quadtree<Prey>(boundary, 4, p5Ref);
         for (let prey of preys) {
-            let point = new Point<Prey>(prey.pos.x, prey.pos.y, prey);
             let sliderVal = parseFloat(linesSlider.value());
             if (prey.numberOfVisionLines != sliderVal) {
                 prey.numberOfVisionLines = sliderVal;
             }
-            preyQt.insert(point);
+            preyQt.insert(prey);
+
+            //check if prey has replicated.
             if (prey.spawned.length > 0) {
                 prey.spawned.forEach((spawn) => {
-                    let sPoint = new Point<Prey>(spawn.pos.x, spawn.pos.y, spawn)
                     if (preys.length < MAXPREY) {
-                        preyQt.insert(sPoint);
+                        //insert into relevant data structures.
+                        preyQt.insert(spawn);
                         preys.push(spawn);
                         drawables.push(spawn);
                     }
                 })
+                //call function to remove internal spawn references.
                 prey.popSpawns();
             }
         }
@@ -76,8 +78,7 @@ export const sketch = (p5Ref: p5) => {
             let closePrey = preyQt.query(range);
             let eatenPrey = [];
             if (closePrey.length != 0) {
-                let mappedPrey = closePrey.map((point) => point.userData)
-                eatenPrey = pred.collisionDetection(mappedPrey);
+                eatenPrey = pred.collisionDetection(closePrey);
                 if (eatenPrey.length != 0) {
                     for (let prey of eatenPrey) {
                         drawables = drawables.filter((x) => x != prey)
@@ -85,7 +86,13 @@ export const sketch = (p5Ref: p5) => {
                     }
                 }
             }
+            pred.color = p5Ref.color("red");
         }
+        preds.reduce((previous, current) => {
+            if (current.numberEaten > previous.numberEaten) {
+                return current;
+            } else { return previous; }
+        }).color = p5Ref.color("blue");
 
         for (let d of drawables) {
             d.move();

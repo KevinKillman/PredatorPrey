@@ -1,13 +1,13 @@
 import * as p5 from "p5";
 
-export class Point<Type> {
+export class Point {
     x: number;
     y: number;
-    userData: Type;
-    constructor(x: number, y: number, userData: Type = null) {
+    // userData: Type;
+    constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
-        this.userData = userData;
+        // this.userData = userData;
     }
 }
 
@@ -26,25 +26,30 @@ export class Rectangle {
         this.h = h;
     }
 
-    contains(point: any) {
+    contains(point: Point) {
         return (point.x > this.x - this.w && point.x < this.x + this.w && point.y > this.y - this.h && point.y < this.y + this.h)
     }
 
-    intersects(range: any) {
+    intersects(range: Rectangle) {
         return !(range.x - range.w > this.x + this.w || range.x + range.w < this.x - this.w || range.y - range.h > this.y + this.h || range.y + range.h < this.y - this.h);
     }
 }
-
-export class Quadtree<Type> {
+export class Quadtree<Type extends Point> {
     boundary: Rectangle;
     capacity: number;
-    points: any[];
+    points: Type[];
     nw: Quadtree<Type>;
     ne: Quadtree<Type>;
     sw: Quadtree<Type>;
     se: Quadtree<Type>;
     divided: Boolean;
     _p5: p5;
+    /**
+     *
+     * @param boundary Area quadtree will cover
+     * @param capacity how many points each quadrant will hold before being subdivided
+     * @param p5Ref reference to p5 to use for debugging/drawing
+     */
     constructor(boundary: Rectangle, capacity: number, p5Ref: p5 = null) {
         this.boundary = boundary;
         this.capacity = capacity;
@@ -54,6 +59,9 @@ export class Quadtree<Type> {
             this._p5 = p5Ref;
         }
     }
+    /**
+     * splits current Quadtree, or subsection, into 4 new Quadtrees.
+     */
     subdivide() {
         let ne = new Rectangle(
             this.boundary.x + this.boundary.w / 2,
@@ -81,7 +89,10 @@ export class Quadtree<Type> {
         this.sw = new Quadtree<Type>(sw, this.capacity, this._p5);
         this.divided = true;
     }
-
+    /**
+     *
+     * @param point point to be inserted
+     */
     insert(point: Type) {
         if (!this.boundary.contains(point)) {
             return false;
@@ -100,8 +111,14 @@ export class Quadtree<Type> {
             if (this.sw.insert(point)) return true;
         }
     }
+    /**
+     *
+     * @param range:Rectangle - area to be searched
+     * @param found: for recursion, is returned. can pass own array instead of capturing return.
+     * @returns All points within range.
+     */
 
-    query(range: Rectangle, found: any[] = []): Type[] {
+    query(range: Rectangle, found: Type[] = []): Type[] {
 
         if (!this.boundary.intersects(range)) {
             return found;
@@ -121,7 +138,11 @@ export class Quadtree<Type> {
         return found;
     }
 
-    runFunctionOnAllPoints(func: Function = (point: Type) => { }) {
+    /**
+     * defaults to console logging all points in tree
+     * @param func function that runs on all points
+     */
+    runFunctionOnAllPoints(func: Function = (point: Type) => { console.log(point); }) {
         this.points.forEach(p => { func(p) });
         if (this.divided) {
             this.nw.runFunctionOnAllPoints(func);
@@ -133,6 +154,10 @@ export class Quadtree<Type> {
         }
     }
 
+    /**
+     * draw quadtree and points within
+     * for debugging.
+     */
     show() {
         this._p5.strokeWeight(1);
         this._p5.stroke(255);
