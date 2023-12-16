@@ -1,6 +1,7 @@
 import * as p5 from "p5";
 import { Vector } from "p5";
 import { DebugObject, Drawable, Prey } from './Prey';
+import { Line, Point, Quadtree, inteceptCircleLineSeg } from './Quadtree';
 
 export class Predator implements Drawable {
     _p5: p5;
@@ -8,7 +9,7 @@ export class Predator implements Drawable {
     heading: Vector;
     radius: number;
     growSize: number;
-    visionLines: Vector[];
+    visionLines: Line[];
     headingIncrease: Vector;
     private _numberOfVisionLines: number;
     public set numberOfVisionLines(numberOfVisionLines: number) {
@@ -76,8 +77,8 @@ export class Predator implements Drawable {
     }
     drawVisionRays() {
         this._p5.stroke(255, 0, 0);
-        this.visionLines.forEach((point) => {
-            this._p5.line(this.pos.x, this.pos.y, this.pos.x + point.x, this.pos.y + point.y);
+        this.visionLines.forEach((line) => {
+            this._p5.line(this.pos.x, this.pos.y, this.pos.x + line.p2.x, this.pos.y + line.p2.y);
             this._p5.stroke(0, 255, 0);
         })
     }
@@ -87,7 +88,10 @@ export class Predator implements Drawable {
         for (let i = 0; i < this._numberOfVisionLines; i++) {
             let c = up.copy();
             c.mult(this.visionDistance);
-            this.visionLines.push(c);
+            let newLine = new Line();
+            newLine.p1 = new Point(0, 0);
+            newLine.p2 = new Point(c.x, c.y);
+            this.visionLines.push(newLine);
             up.rotate(this.visionLinesAngle);
         }
     }
@@ -101,9 +105,30 @@ export class Predator implements Drawable {
             if (dMag <= minDistance) {
                 eaten.push(other);
                 this.consume(other);
+            } else {
+                this.castVisionRays(other);
             }
         }
         return eaten;
+    }
+    castVisionRays(other: Prey) {
+        let found = false;
+        let index = 0;
+        let retArray: Point[] = [];
+        while (!found) {
+            let line = this.visionLines[index];
+            let newLine = new Line();
+            newLine.p1 = new Point(this.pos);
+            newLine.p2 = new Point(line.p2.x + this.pos.x, line.p2.y + this.pos.y);
+            retArray = inteceptCircleLineSeg(other, newLine);
+            if (retArray.length > 0) {
+                found = true;
+                console.log(retArray);
+            }
+            index++;
+            if (index == this.visionLines.length) found = true;
+        }
+        return retArray;
     }
     consume(prey: Prey) {
         this.numberEaten++;

@@ -24,6 +24,7 @@ export const sketch = (p5Ref: p5) => {
 
         for (let i = 0; i <= 3; i++) {
             let pred = new Predator(p5Ref.createVector(p5Ref.random(p5Ref.width), p5Ref.random(p5Ref.height)), p5Ref);
+            pred.debugObj.showVisionLines = true;
             preds.push(pred);
             drawables.push(pred);
         }

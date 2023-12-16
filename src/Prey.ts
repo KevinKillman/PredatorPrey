@@ -1,6 +1,6 @@
 import * as p5 from 'p5';
 import { Vector } from "p5";
-import { Point } from './Quadtree';
+import { Circle, Point } from './Quadtree';
 
 export interface Drawable {
     pos: Vector;
@@ -8,7 +8,7 @@ export interface Drawable {
     move(): void;
 }
 
-export class Prey implements Drawable, Point {
+export class Prey implements Drawable, Point, Circle {
     pos: Vector;
     public get x() {
         return this.pos.x
@@ -139,9 +139,9 @@ export class Prey implements Drawable, Point {
     }
 
     spawn() {
-        let nPrey = new Prey(this._p5.createVector(this._p5.random(this._p5.width), this._p5.random(this._p5.height)), this._p5)
         let determiner = this._p5.random(0, 100);
-        if (determiner >= 25) {
+        if (determiner >= 101) {
+            let nPrey = new Prey(this._p5.createVector(this._p5.random(this._p5.width), this._p5.random(this._p5.height)), this._p5);
             this._spawns.push(nPrey);
         }
         this.spawntime = 0;
@@ -173,6 +173,10 @@ export class Prey implements Drawable, Point {
                 }
             }
         }
+    }
+
+    add(vec: p5.Vector): Point {
+        return new Point(this.pos);
     }
 
 }
