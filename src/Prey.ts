@@ -1,12 +1,9 @@
 import * as p5 from 'p5';
 import { Vector } from "p5";
-import { Circle, Point } from './Quadtree';
-
-export interface Drawable {
-    pos: Vector;
-    draw(): void;
-    move(): void;
-}
+import { Point } from "./QuadtreeUtils/Point";
+import { Circle } from "./QuadtreeUtils/Circle";
+import { Drawable } from './Drawable';
+import { DebugObject } from './DebugObject';
 
 export class Prey implements Drawable, Point, Circle {
     pos: Vector;
@@ -179,11 +176,4 @@ export class Prey implements Drawable, Point, Circle {
         return new Point(this.pos);
     }
 
-}
-
-export class DebugObject {
-    showVisionLines: boolean;
-    constructor() {
-        this.showVisionLines = false;
-    }
 }

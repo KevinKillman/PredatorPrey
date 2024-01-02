@@ -1,8 +1,11 @@
 import * as p5 from 'p5';
 import { Vector, } from 'p5';
 import { Boid } from "./Boid";
-import { Rectangle, Point, Quadtree } from './Quadtree';
-import { Drawable, Prey } from './Prey';
+import { Quadtree } from './Quadtree';
+import { Rectangle } from "./QuadtreeUtils/Rectangle";
+import { Point } from "./QuadtreeUtils/Point";
+import { Prey } from './Prey';
+import { Drawable } from './Drawable';
 import { Predator } from './Predator';
 
 

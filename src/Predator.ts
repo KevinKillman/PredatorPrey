@@ -1,7 +1,11 @@
 import * as p5 from "p5";
 import { Vector } from "p5";
-import { DebugObject, Drawable, Prey } from './Prey';
-import { Line, Point, Quadtree, inteceptCircleLineSeg } from './Quadtree';
+import { Prey } from './Prey';
+import { DebugObject } from './DebugObject';
+import { Drawable } from './Drawable';
+import { Quadtree, inteceptCircleLineSeg } from './Quadtree';
+import { Point } from "./QuadtreeUtils/Point";
+import { Line } from "./QuadtreeUtils/Line";
 
 export class Predator implements Drawable {
     _p5: p5;
