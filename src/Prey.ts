@@ -15,8 +15,13 @@ export class Prey implements Drawable, Point, Circle {
     }
     heading: Vector;
     visionLines: Vector[];
-    ///so I can use a setter. Whenever this is set outside the object, the angle for the vision line rotation is recalculated.///
+    /**
+     * use public getter and setter.
+     */
     private _numberOfVisionLines: number;
+    /**
+     * will reset the spacing between vision lines when setting.
+     */
     public set numberOfVisionLines(numberOfVisionLines: number) {
         this._numberOfVisionLines = numberOfVisionLines;
         this.calculateVisionLineOffsets();
@@ -24,6 +29,9 @@ export class Prey implements Drawable, Point, Circle {
     public get numberOfVisionLines() {
         return this._numberOfVisionLines;
     }
+    /**
+     * degrees of separation between vision lines.
+     */
     visionLinesAngle: number;
     _p5: p5;
     radius: number

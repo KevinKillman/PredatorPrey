@@ -13,7 +13,7 @@ let alignSlider: p5.Element, cohesionSlider: p5.Element, separationSlider: p5.El
 let flock: Boid[] = [];
 let preyQt: Quadtree<Prey>;
 let range: Rectangle;
-let canvasDimensions = { height: 800, width: 800 };
+let canvasDimensions = { height: 1600, width: 800 };
 let preys: Prey[] = [];
 let preds: Predator[] = [];
 let drawables: any[] = [];
@@ -25,12 +25,7 @@ export const sketch = (p5Ref: p5) => {
         p5Ref.angleMode(p5Ref.DEGREES);
         linesSlider = p5Ref.createSlider(2, 14, 4, 1);
 
-        for (let i = 0; i <= 3; i++) {
-            let pred = new Predator(p5Ref.createVector(p5Ref.random(p5Ref.width), p5Ref.random(p5Ref.height)), p5Ref);
-            pred.debugObj.showVisionLines = true;
-            preds.push(pred);
-            drawables.push(pred);
-        }
+
 
         for (let i = 0; i < 10; i++) {
             let prey = new Prey(p5Ref.createVector(p5Ref.random(p5Ref.width), p5Ref.random(p5Ref.height)), p5Ref);
@@ -39,7 +34,17 @@ export const sketch = (p5Ref: p5) => {
             preys.push(prey);
             drawables.push(prey);
         }
+        for (let i = 0; i <= 3; i++) {
+            let pred = new Predator(p5Ref.createVector(p5Ref.random(p5Ref.width), p5Ref.random(p5Ref.height)), p5Ref);
+            pred.debugObj.showVisionLines = true;
+            preds.push(pred);
+            drawables.push(pred);
+        }
         canvas.mouseClicked(() => {
+            for (let pred of preds) {
+                console.log(pred.inputs);
+            }
+
             for (let prey of preys) {
                 if (p5Ref.keyIsDown(p5Ref.CONTROL)) {
                     prey.rotateLeft();
@@ -76,7 +81,7 @@ export const sketch = (p5Ref: p5) => {
                 prey.popSpawns();
             }
         }
-
+        let eatenPreyMaster = [];
         for (let pred of preds) {
             let range = new Rectangle(pred.pos.x, pred.pos.y, pred.visionDistance, pred.visionDistance);
             let closePrey = preyQt.query(range);
@@ -85,12 +90,18 @@ export const sketch = (p5Ref: p5) => {
                 eatenPrey = pred.collisionDetection(closePrey);
                 if (eatenPrey.length != 0) {
                     for (let prey of eatenPrey) {
-                        drawables = drawables.filter((x) => x != prey)
-                        preys = preys.filter((x) => x != prey);
+                        eatenPreyMaster.push(prey)
+
                     }
                 }
+            } else {
+                pred.resetInputs();
             }
             pred.color = p5Ref.color("red");
+        }
+        for (let prey of eatenPreyMaster) {
+            drawables = drawables.filter((x) => x != prey)
+            preys = preys.filter((x) => x != prey);
         }
         preds.reduce((previous, current) => {
             if (current.numberEaten > previous.numberEaten) {
@@ -102,6 +113,7 @@ export const sketch = (p5Ref: p5) => {
             d.move();
             d.draw();
         }
+        // preyQt.show()
 
     }
 }
