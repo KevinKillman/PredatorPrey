@@ -1,50 +1,119 @@
 import * as p5 from 'p5';
 import { Vector, } from 'p5';
 import { Boid } from "./Boid";
-import { Rectangle, Point, Quadtree } from './Quadtree';
+import { Quadtree } from './Quadtree';
+import { Rectangle } from "./QuadtreeUtils/Rectangle";
+import { Point } from "./QuadtreeUtils/Point";
+import { Prey } from './Prey';
+import { Drawable } from './Drawable';
+import { Predator } from './Predator';
 
 
-let alignSlider: p5.Element, cohesionSlider: p5.Element, separationSlider: p5.Element;
+let alignSlider: p5.Element, cohesionSlider: p5.Element, separationSlider: p5.Element, linesSlider: any;
 let flock: Boid[] = [];
-let qt: Quadtree<Point<Boid>>;
+let preyQt: Quadtree<Prey>;
 let range: Rectangle;
-let canvasDimensions = { height: 2000, width: 960 };
-// let points: any[] = [];
-export const sketch = (p: p5) => {
-    p.setup = () => {
-        let canvas = p.createCanvas(canvasDimensions.height, canvasDimensions.width);
+let canvasDimensions = { height: 1600, width: 800 };
+let preys: Prey[] = [];
+let preds: Predator[] = [];
+let drawables: any[] = [];
+const MAXPREY: number = 500;
+export const sketch = (p5Ref: p5) => {
+    p5Ref.setup = () => {
+        let canvas = p5Ref.createCanvas(canvasDimensions.height, canvasDimensions.width);
         canvas.parent("canvasContainer")
-        alignSlider = p.createSlider(0, 5, 1, .1);
-        cohesionSlider = p.createSlider(0, 5, 1, .1);
-        separationSlider = p.createSlider(0, 5, 1, .1);
+        p5Ref.angleMode(p5Ref.DEGREES);
+        linesSlider = p5Ref.createSlider(2, 14, 4, 1);
 
 
-        for (let i = 0; i <= 100; i++) {
-            let b = new Boid(p);
-            flock.push(b);
-            b.alignSlider = alignSlider;
-            b.cohesionSlider = cohesionSlider;
-            b.separationSlider = separationSlider;
+
+        for (let i = 0; i < 10; i++) {
+            let prey = new Prey(p5Ref.createVector(p5Ref.random(p5Ref.width), p5Ref.random(p5Ref.height)), p5Ref);
+            prey.movementMultiplier = p5Ref.random(1, 7);
+            prey.debugObj.showVisionLines = false;
+            preys.push(prey);
+            drawables.push(prey);
         }
+        for (let i = 0; i <= 3; i++) {
+            let pred = new Predator(p5Ref.createVector(p5Ref.random(p5Ref.width), p5Ref.random(p5Ref.height)), p5Ref);
+            pred.debugObj.showVisionLines = true;
+            preds.push(pred);
+            drawables.push(pred);
+        }
+        canvas.mouseClicked(() => {
+            for (let pred of preds) {
+                console.log(pred.inputs);
+            }
+
+            for (let prey of preys) {
+                if (p5Ref.keyIsDown(p5Ref.CONTROL)) {
+                    prey.rotateLeft();
+                } else {
+                    prey.rotateRight();
+                }
+            }
+        })
     }
 
-    p.draw = () => {
-        p.background(0);
-        let boundary = new Rectangle(canvasDimensions.height / 2, canvasDimensions.width / 2, canvasDimensions.height, canvasDimensions.width);
-        qt = new Quadtree<Point<Boid>>(boundary, 4, p);
-        for (let b of flock) {
-            let point = new Point<Boid>(b.position.x, b.position.y, b);
-            qt.insert(point);
-        }
+    p5Ref.draw = () => {
+        p5Ref.background(0);
+        //always recreate the boundary and Quadtree.
+        let boundary = new Rectangle(canvasDimensions.height / 2, canvasDimensions.width / 2, canvasDimensions.width, canvasDimensions.height);
+        preyQt = new Quadtree<Prey>(boundary, 4, p5Ref);
+        for (let prey of preys) {
+            let sliderVal = parseFloat(linesSlider.value());
+            if (prey.numberOfVisionLines != sliderVal) {
+                prey.numberOfVisionLines = sliderVal;
+            }
+            preyQt.insert(prey);
 
-        for (let b of flock) {
-            b.update();
-            let range = new Rectangle(b.position.x, b.position.y, b.alignRadius, b.alignRadius)
-            let other: Boid[] = qt.query(range).map((x) => x.userData);
-            // b.flock(other);
-            b.collision(other);
-            b.show();
+            //check if prey has replicated.
+            if (prey.spawned.length > 0) {
+                prey.spawned.forEach((spawn) => {
+                    if (preys.length < MAXPREY) {
+                        //insert into relevant data structures.
+                        preyQt.insert(spawn);
+                        preys.push(spawn);
+                        drawables.push(spawn);
+                    }
+                })
+                //call function to remove internal spawn references.
+                prey.popSpawns();
+            }
         }
+        let eatenPreyMaster = [];
+        for (let pred of preds) {
+            let range = new Rectangle(pred.pos.x, pred.pos.y, pred.visionDistance, pred.visionDistance);
+            let closePrey = preyQt.query(range);
+            let eatenPrey = [];
+            if (closePrey.length != 0) {
+                eatenPrey = pred.collisionDetection(closePrey);
+                if (eatenPrey.length != 0) {
+                    for (let prey of eatenPrey) {
+                        eatenPreyMaster.push(prey)
+
+                    }
+                }
+            } else {
+                pred.resetInputs();
+            }
+            pred.color = p5Ref.color("red");
+        }
+        for (let prey of eatenPreyMaster) {
+            drawables = drawables.filter((x) => x != prey)
+            preys = preys.filter((x) => x != prey);
+        }
+        preds.reduce((previous, current) => {
+            if (current.numberEaten > previous.numberEaten) {
+                return current;
+            } else { return previous; }
+        }).color = p5Ref.color("blue");
+
+        for (let d of drawables) {
+            d.move();
+            d.draw();
+        }
+        // preyQt.show()
 
     }
 }
